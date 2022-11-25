@@ -1,0 +1,49 @@
+# Exercise 1
+
+1.
+```{r}
+# Input X: matrix
+kmeanspp <- function(x, k) {
+  x_row <- nrow(x)
+  
+  center_index <- sample(1:x_row, size=1)
+  
+  for (i in 2:k) {
+    D <- c()
+    for (d in 1:x_row) {
+      data_centers_distances <- c()
+      for (c in center_index) {
+        data_centers_distances <- c(data_centers_distances, sum((x[d,]-x[c,])^2))
+      }
+      D <- c(D, min(data_centers_distances))
+    }
+    center_index <- c(center_index, which.max(D^2/sum(D^2)))
+  }
+  
+  return(kmeans(x, centers=x[center_index,]))
+}
+```
+
+2.
+```{r}
+NORM <- function(n) {
+  set.seed(NULL)
+  res <- c()
+  for (i in 1:(n*15)) {
+    res <- c(res, runif(1, min=0, max=500))
+  }
+  true_centers <- matrix(res, nrow=n, ncol=dim, byrow=TRUE)
+}
+```
+
+# Exercise 2
+
+1.
+```{r}
+k1 <- kmeans(iris[,1:4], centers=2)
+```
+
+```{r}
+m <- Mclust(iris[,1:4])
+plot(m)
+```
