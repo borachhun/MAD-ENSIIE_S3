@@ -1,0 +1,70 @@
+---
+title: "MAD_TD_24-10-2022"
+output: pdf_document
+date: "2022-10-24"
+---
+
+# TD Mixture Models
+
+## Exercise 1
+
+### 1.
+```{r}
+parameters <- list()
+parameters$pi <- c(1/3, 2/3)
+parameters$mean <- c(0, 4)
+parameters$sd <- c(1, 0.5)
+
+rmultinom(1, 1000, parameters$pi) -> effectifs
+
+x <- c()
+for (k in 1:length(parameters$mean)) {
+  x <- c(x, rnorm(effectifs[k], mean=parameters$mean[k], sd=parameters$sd[k]))
+}
+```
+
+```{r}
+hist(x, 50, prob=TRUE)
+curve(1/3 * dnorm(x, mean=0, sd=1) + 2/3 * dnorm(x, mean=4, sd=1/2), -3, 5, col="red", add=TRUE)
+```
+
+### 2.
+```{r}
+z <- rep(c(1,2), effectifs) # true classes
+X <- data.frame(V1=x)
+
+kmeans(X, 2, nstart=30, iter.max=100) -> res
+res$centers
+res$cluster
+
+sum(res$cluster != z)
+mean(res$cluster != z)
+
+table(z, kmeans=res$cluster)
+```
+
+### 3.
+```{r}
+mean(x[z==1])
+mean(x[z==2])
+mean(x[res$cluster==2])
+mean(x[res$cluster==1])
+
+sd(x[z==1])
+sd(x[z==2])
+sd(x[res$cluster==2])
+sd(x[res$cluster==1])
+```
+
+### 4.
+```{r}
+Mclust(X, G=1:5) -> result
+plot(result, "BIC")
+plot(result, "BIC", model="V")
+
+Mclust(X, G=1:5, model="V") -> result
+table(z, result$classification)
+
+Mclust(X, G=2, model="E") -> result
+```
+

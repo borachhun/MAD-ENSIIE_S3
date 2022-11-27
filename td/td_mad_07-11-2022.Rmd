@@ -1,0 +1,49 @@
+# TD MAD 07/11/2022 - Mixture Models (substitute teacher)
+
+## Exercise 1
+
+```{r}
+res
+
+X1 = X[res$cluster == 1, ]
+X2 = X[res$cluster == 2, ]
+
+mu1_hat = mean(X1)
+mu2_hat = mean(X2)
+
+sigma1_hat = sd(X1)
+sigma2_hat = sd(X2)
+
+pi1_hat = length(X1) / N
+```
+
+`Mclust("E")`: on suppose $\sigma_1 = \sigma_2 = ... = \sigma_G$ (same sigma for all classes)
+
+## Exercise 2
+
+2.
+```{r}
+plot(faithful)
+```
+2 clusters
+
+3.
+```{r}
+Mclust(faithful) -> res
+summary(res)
+```
+
+4.
+```{r}
+for (arg in c("BIC", "classification", "uncertainty", "density")) {
+  plot(res, arg)
+}
+```
+
+5.
+```{r}
+hierarchical = hclust(dist(faithful), method="ward.D2")
+modd_hclust = cutree(hierarchical, k=2)
+modd_Mclust = Mclust(faithful, G=2)
+table(modd_hclust, modd_Mclust$classification)
+```

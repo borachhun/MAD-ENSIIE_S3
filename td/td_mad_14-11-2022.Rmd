@@ -1,0 +1,23 @@
+# Exercise 1
+```{r}
+library(MASS)
+crabsquant <- crabs[, 4:8]
+head(crabsquant)
+```
+
+1. 
+```{r}
+library(FactoMineR)
+pca <- PCA(crabsquant)
+pca$eig
+pca$var
+```
+
+Correction:
+```{r}
+X <- crabsquant
+Xtilde <- X / X[, "CL"]
+Xtilde[, "CL"] <- NULL
+res_pca <- PCA(Xtilde)
+plot(res_pca$ind$coord[, 2], col=as.numeric(crabs$sp), pch=as.numeric(crabs$sex))
+```
