@@ -1,0 +1,69 @@
+# Exercise 1
+
+## KPCA with `iris` data set:
+
+`kpca` function kernel:
+- `vanilladot`: scalar product (Euclidean distance)
+- `rbfdot`: $\exp \left( -\frac{1}{2\sigma^2}||x_i-x_j||^2_2 \right)$
+
+```{r}
+library(kernlab)
+X <- iris[, 1:4]
+#pairs(X, col=iris$Species)
+
+X <- as.matrix(X)
+kpca(X) -> res.kpca
+#str(res.kpca)
+kpca(X, kpar=list(sigma=100)) -> res.kpca100
+kpca(X, kpar=list(sigma=1/100)) -> res.kpca1sur100
+kpca(X, kernel="vanilladot", kpar=list()) -> res.pca
+
+par(mfrow=c(1,4))
+plot(rotated(res.kpca), col=iris$Species)
+plot(rotated(res.kpca100), col=iris$Species)
+plot(rotated(res.kpca1sur100), col=iris$Species)
+plot(rotated(res.pca), col=iris$Species)
+
+hist(dist(X)^2)
+summary(dist(X)^2)
+```
+
+## Programming KPCA
+
+1. $X \rightarrow K=(K_{ij})$
+2. Calculate $\tilde{K} = K - \frac{2}{n}\mathbb{1}K + \frac{1}{n^2}\mathbb{1}K\mathbb{1}$
+3. Diagonalize $\tilde{K}$
+4. Project
+
+$$
+X = UDV \\
+XX^T = UDVV^TD^TU^T = UD^2U^T
+$$
+
+```{r}
+myKPCA <- function(X, k=2, kernel="Gaussian", beta=1) {
+  X <- as.matrix(X)
+  if (kernel == "Gaussian") {
+    K <- exp(-1/beta*(as.matrix(dist(X))^2))
+  }
+  else {
+    K <- X %*% t(X)
+  }
+  
+  # Centering
+  n <- nrow(X)
+  II <- matrix(1/n,n,n)
+  Ktilde <- K - 2*II %*% K + II %*% K %*% II
+  
+  # Eigenvalue decomposition
+  res <- svd(Ktilde)
+  alpha <- res$u
+  lambda <- res$d^2
+  
+  # Projection
+  Y <- K %*% alpha[,1:k]
+  
+  return(list(Y=Y, lambda=lambda[1:k]))
+}
+```
+
