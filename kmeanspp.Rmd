@@ -28,22 +28,39 @@ kmeanspp <- function(x, k) {
 ```{r}
 NORM <- function(n) {
   set.seed(NULL)
-  res <- c()
-  for (i in 1:(n*15)) {
-    res <- c(res, runif(1, min=0, max=500))
+  dim <- 15
+  center_coor <- c()
+  for (i in 1:(n*dim)) {
+    center_coor <- c(center_coor, runif(1, min=0, max=500))
   }
-  true_centers <- matrix(res, nrow=n, ncol=dim, byrow=TRUE)
+  true_centers <- matrix(center_coor, nrow=n, ncol=dim, byrow=TRUE)
+  
+  res <- c()
+  for (ct_row in 1:n) {
+    for (i in 1:400) {
+      for (ct_col in 1:dim) {
+        res <- c(res, rnorm(1, mean=true_centers[ct_row, ct_col], sd=1))
+      }
+    }
+  }
+  return(matrix(res, ncol=dim, byrow=TRUE))
 }
 ```
+
 
 # Exercise 2
 
 1.
 ```{r}
-k1 <- kmeans(iris[,1:4], centers=2)
+data_iris <- iris[,1:4]
 ```
 
 ```{r}
-m <- Mclust(iris[,1:4])
-plot(m)
+k1 <- kmeans(data_iris, centers=2)
+```
+
+```{r}
+library(mclust)
+m <- Mclust(data_iris)
+plot(m, "BIC")
 ```
