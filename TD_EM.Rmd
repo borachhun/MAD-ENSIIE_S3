@@ -68,25 +68,21 @@ EM_init_poisson <- function(X, K) {
 
 At iteration $q$, E step computes $Q(\theta|\theta^{(q)})$.
 
-$$
-\begin{aligned}
+\begin{align*}
 Q(\theta|\theta^{(q)}) 
 & = \mathbb{E}_{Z|X;\theta^{(q)}} \left[ \log \mathbb{P}(X,Z;\theta) \right]
 = \mathbb{E}_{Z|X;\theta^{(q)}} \left[ \log  \prod_{i=1}^{n} \mathbb{P}(x_i, z_i;\theta) \right] \\
 & = \sum_{i=1}^n \mathbb{E}_{z_i|x_i;\theta^{(q)}} \left[ \log \left( \mathbb{P}(z_i) \times \mathbb{P}(x_i|z_i;\theta) \right) \right]
-\end{aligned}
-$$
+\end{align*}
 
 Let $z_{ik} = 1_{\{z_i=k\}}$.
 
-$$
-\begin{aligned}
+\begin{align*}
 Q(\theta|\theta^{(q)})
 & = \sum_{i=1}^n \mathbb{E}_{z_i|x_i;\theta^{(q)}} \left[ \sum_{k=1}^K z_{ik} \log \left( \mathbb{P}(z_i=k) \times \mathbb{P}(x_i|z_i=k;\theta) \right) \right] \\
 & = \sum_{i=1}^n \sum_{k=1}^K \mathbb{P}(z_i=k|x_i;\theta^{(q)}) \log \left( \mathbb{P}(z_i=k) \times \mathbb{P}(x_i|z_i=k;\theta) \right) \\
 & = \sum_{i=1}^n \sum_{k=1}^K \mathbb{P}(z_i=k|x_i;\theta^{(q)}) \log \left( \pi_k \times \mathbb{P}_k(x_i;\lambda_k) \right)
-\end{aligned}
-$$
+\end{align*}
 
 Let $$t_{ik}^{(q)} = \mathbb{P}(z_i=k|x_i;\theta^{(q)}) = \frac{\pi_k^{(q) } \mathbb{P}_k(x_i;\lambda_k^{(q)})}{\sum_{m=1}^K \pi_m^{(q) } \mathbb{P}_m(x_i;\lambda_m^{(q)})}$$
 
@@ -115,14 +111,13 @@ E_step_poisson <- function(X, K, theta) {
 
 At iteration $q$, M step computes $$\theta^{(q+1)} = \arg \max_\theta Q(\theta|\theta^{(q)})$$
 
-$$
-\begin{aligned}
+\begin{align*}
 \frac{\partial}{\partial \lambda_1} Q(\theta|\theta^{(q)})
 & = \frac{\partial}{\partial \lambda_1} \sum_{i=1}^n \sum_{k=1}^K t_{ik}^{(q)} \log \left( \pi_k \times \frac{e^{-\lambda_k}}{x_i!}\lambda_k^{x_i} \right) \\
 & = \frac{\partial}{\partial \lambda_1} \sum_{i=1}^n t_{i1}^{(q)} \left( \log\pi_1 - \lambda_1 - \log (x_i!) + x_i\log \lambda_1 \right) \\
 & = \sum_{i=1}^n t_{i1}^{(q)} \left(-1 + \frac{x_i}{\lambda_1} \right) = 0 \\
-\end{aligned}
-$$
+\end{align*}
+
 $$\lambda_1^{(q+1)} = \frac{\sum_{i=1}^n t_{i1}^{(q)} x_i}{\sum_{i=1}^n t_{i1}^{(q)}}
 $$
 
@@ -134,11 +129,9 @@ Since there is a constraint $\sum_{k=1}^K \pi_k = 1$, consider Lagrangian:
 $$\mathcal{L}(\theta, \alpha) = Q(\theta|\theta^{(q)}) + \alpha \left( \sum_{k=1}^K \pi_k - 1 \right)$$
 
 $$
-\begin{aligned}
 \frac{\partial}{\partial \pi_1} \mathcal{L}(\theta, \alpha) 
-& = \frac{\partial}{\partial \pi_1} \sum_{i=1}^n t_{i1}^{(q)} \log \left( \pi_1 \times \frac{e^{-\lambda_1}}{x_i!}\lambda_1^{x_i} \right) + \alpha
+= \frac{\partial}{\partial \pi_1} \sum_{i=1}^n t_{i1}^{(q)} \log \left( \pi_1 \times \frac{e^{-\lambda_1}}{x_i!}\lambda_1^{x_i} \right) + \alpha
 = \sum_{i=1}^n \frac{t_{i1}^{(q)}}{\pi_1} + \alpha = 0
-\end{aligned}
 $$
 $$\pi_1 = -\frac{\sum_{i=1}^n t_{i1}^{(q)}}{\alpha}$$
 

@@ -1,56 +1,128 @@
-# Exercise 1
+---
+title: "Variant of k-means for acceleration and better convergence"
+author: "Piseth KHENG, Borachhun YOU"
+date: "24 October 2022"
+output: pdf_document
+classoption: a4paper
+---
 
-1.
+# Exercise 1: `k-means++` algorithm
+
+### 1. Programming `k-means++` algorithm
+
+`k-means++` is an algorithm proposed by David Arthur and Sergei Vassilvitskii with the goal of improving the convergence and speed of the `k-means` algorithm, and it does so by carefully choosing the center of the clusters at the initial step. With `k-means`, it initially chooses the centers uniformly at random from the data points. In contrast, `k-means++` chooses the centers as followed:
+
+i. Choose one center $c_1$ uniformly at random from the data points $\mathcal{X}$
+ii. Choose the next center $c_i$ by selecting $x' \in \mathcal{X}$ with weighted probability $\frac{D(x')^2}{\sum_{x \in \mathcal{X}} D(x)^2}$
+iii. Repeat step ii until a total of $k$ centers are chosen, where $k$ is a given number of clusters.
+
+After choosing the centers, `k-means++` proceeds the same calculations as `k-means`.
+
 ```{r}
-# Input X: matrix
-kmeanspp <- function(x, k) {
-  x_row <- nrow(x)
+kmeanspp <- function(X, k) {
+  X <- as.matrix(X)
+  X_row <- nrow(X)
   
-  center_index <- sample(1:x_row, size=1)
+  # choose first center uniformly at random
+  center_index <- sample(1:X_row, size=1)
   
   for (i in 2:k) {
-    D <- c()
-    for (d in 1:x_row) {
-      data_centers_distances <- c()
+    
+    # calculate squared distance to closest chosen center
+    D2 <- c()
+    for (d in 1:X_row) {
+      data_centers_dist_sq <- c()
       for (c in center_index) {
-        data_centers_distances <- c(data_centers_distances, sum((x[d,]-x[c,])^2))
+        data_centers_dist_sq <- c(data_centers_dist_sq, sum((X[d,]-X[c,])^2))
       }
-      D <- c(D, min(data_centers_distances))
+      D2 <- c(D2, min(data_centers_distances))
     }
-    center_index <- c(center_index, which.max(D^2/sum(D^2)))
+    
+    # choose a new center
+    center_index <- c(center_index, sample(1:X_row, size=1, prob=(D2/sum(D2))))
   }
   
-  return(kmeans(x, centers=x[center_index,]))
+  # run kmeans with initialized centers
+  return(kmeans(X, centers=X[center_index,]))
 }
 ```
 
-2.
+### 2. Simulate `NORM-10` and `NORM-25` datasets
+
+We now simulate 2 datasets, `NORM-10` and `NORM-25`, for evaluating the performance of the `k-means++` algorithm. To generate the datasets, we choose 10 (or 25) "real" centers uniformly at random from a hypercube of side length 500. We then add points from Gaussian distributions of variance 1 around each real center.
+
+- For `NORM-10`, we generate 1000 data around each of the 10 centers of dimension 5
+- For `NORM-25`, we generate 400 data around each of the 25 centers of dimension 15.
+
 ```{r}
-NORM <- function(n) {
+# n = number of centers
+# dim = dimension of data
+# pts = number of points around each center
+NORM <- function(n, dim, pts) {
   set.seed(NULL)
-  dim <- 15
+  
+  # choose true centers
   center_coor <- c()
   for (i in 1:(n*dim)) {
     center_coor <- c(center_coor, runif(1, min=0, max=500))
   }
   true_centers <- matrix(center_coor, nrow=n, ncol=dim, byrow=TRUE)
   
+  # add points around centers
   res <- c()
   for (ct_row in 1:n) {
-    for (i in 1:400) {
+    for (i in 1:pts) {
       for (ct_col in 1:dim) {
         res <- c(res, rnorm(1, mean=true_centers[ct_row, ct_col], sd=1))
       }
     }
   }
+  
   return(matrix(res, ncol=dim, byrow=TRUE))
+}
+
+#`NORM-10` <- NORM(n=10, dim=5, pts=1000)
+#`NORM-25` <- NORM(n=25, dim=15, pts=400)
+```
+
+### 3. `k-means` and `k-means++` comparison
+
+Potential function:
+$$\phi = \sum_{x \in \mathcal{X}} \min_{c \in \mathcal{C}} ||x-c||^2$$
+where $\mathcal{X}$ is the set of data points and $\mathcal{C}$ is the set of centers
+
+```{r}
+phi <- function(X, C) {
+  res <- 0
+  for (x_row in 1:nrow(X)) {
+    to_min <- c()
+    for (c_row in 1:nrow(C)) {
+      to_min <- c(to_min, sum((X[x_row,] - C[c_row])^2))
+    }
+    res <- res + min(to_min)
+  }
+  return(res)
 }
 ```
 
+\begin{table}
+\centering
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+ & \multicolumn{2}{|c|}{Average $\phi$} & \multicolumn{2}{|c|}{Minimum $\phi$} & \multicolumn{2}{|c|}{Average $T$} \\
+k & \multicolumn{1}{|c}{\texttt{k-means}} & \multicolumn{1}{c|}{\texttt{k-means++}} & \multicolumn{1}{|c}{\texttt{k-means}} & \multicolumn{1}{c|}{\texttt{k-means++}} & \multicolumn{1}{|c}{\texttt{k-means}} & \multicolumn{1}{c|}{\texttt{k-means++}} \\
+\hline
+10 & - & - & - & - & - & - \\
+25 & - & - & - & - & - & - \\
+50 & - & - & - & - & - & - \\
+\hline
+\end{tabular}
+\caption{caption}
+\end{table}
 
-# Exercise 2
+# Exercise 2: `iris` dataset
 
-1.
+### 1.
 ```{r}
 data_iris <- iris[,1:4]
 ```
