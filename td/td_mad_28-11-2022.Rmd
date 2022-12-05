@@ -67,3 +67,61 @@ myKPCA <- function(X, k=2, kernel="Gaussian", beta=1) {
 }
 ```
 
+# 05-12-2022
+
+```{r}
+data(spam)
+set.seed(1)
+train <- sample(1:dim(spam)[1], 400)
+kpc <- kpca(~., data=spam[train,-58], kernel="rbfdot", kpar=list(sigma=1/1000), features=2)
+
+spam %>% PCA(., quali.sup=ncol(spam[train,]))%>% plot(habillage=ncol(spam[train,]), choix="ind")
+```
+
+# Exercise 2
+
+1.
+```{r}
+library(mlbench)
+
+set.seed(NULL)
+obj <- mlbench.spirals(100, 1, 0.025)
+my.data <- data.frame(obj$x)
+names(my.data) <- c("X1", "X2")
+my.data <- scale(my.data, TRUE, TRUE)
+par(mfrow=c(1,4))
+plot(my.data, col=c("orange", "blue")[obj$classes], main="Original classes")
+my.data <- as.matrix(my.data)
+plot(my.data, col=c("orange", "blue")[kmeans(my.data, 2)$cluster], main="kmeans")
+
+kpca(my.data, kernel="rbfdot") -> kp
+plot(rotated(kp), col=c("orange","blue")[obj$classes], main="KPCA")
+
+specc(my.data, centers=2, kernel="rbfdot") -> sp
+plot(my.data, col=c("orange","blue")[sp], main="Spectral")
+```
+
+2.
+$$
+K_{ij} =  \exp \left( -\frac{1}{\sigma^2} ||x_i - x_j||^2 \right)
+$$
+```{r}
+set.seed(111)
+obj <- mlbench.spirals(100, 1, 0.025)
+my.data <- data.frame(obj$x)
+
+sigma2 = 1
+K <- exp(as.matrix(dist(my.data))^2 / sigma2)
+image(K)
+```
+
+3.
+```{r}
+A <- K - 0.5
+diag(A) <- 0
+D <- diag(colSums(A))
+L <- D-A
+image(A)
+```
+
+
