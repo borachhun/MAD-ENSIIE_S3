@@ -35,7 +35,7 @@ kmeanspp <- function(X, k) {
       for (c in center_index) {
         data_centers_dist_sq <- c(data_centers_dist_sq, sum((X[d,]-X[c,])^2))
       }
-      D2 <- c(D2, min(data_centers_distances))
+      D2 <- c(D2, min(data_centers_dist_sq))
     }
     
     # choose a new center
@@ -43,7 +43,8 @@ kmeanspp <- function(X, k) {
   }
   
   # run kmeans with initialized centers
-  return(kmeans(X, centers=X[center_index,]))
+  #return(kmeans(X, centers=X[center_index,]))
+  return(center_index)
 }
 ```
 
@@ -81,8 +82,8 @@ NORM <- function(n, dim, pts) {
   return(matrix(res, ncol=dim, byrow=TRUE))
 }
 
-#`NORM-10` <- NORM(n=10, dim=5, pts=1000)
-#`NORM-25` <- NORM(n=25, dim=15, pts=400)
+`NORM-10` <- NORM(n=10, dim=5, pts=1000)
+`NORM-25` <- NORM(n=25, dim=15, pts=400)
 ```
 
 ### 3. `k-means` and `k-means++` comparison
@@ -119,6 +120,23 @@ k & \multicolumn{1}{|c}{\texttt{k-means}} & \multicolumn{1}{c|}{\texttt{k-means+
 \end{tabular}
 \caption{caption}
 \end{table}
+
+```{r}
+kmeans_index <- sample(1:10000, size=25)
+kmeanspp_index <- kmeanspp(`NORM-25`, 25)
+
+Sys.time() -> begin1
+kmeans(`NORM-25`, `NORM-25`[kmeans_index,])
+Sys.time() -> end1
+
+Sys.time() -> begin2
+kmeans(`NORM-25`, `NORM-25`[kmeanspp_index,])
+Sys.time() -> end2
+
+print(end1-begin1)
+print(end2-begin2)
+```
+
 
 # Exercise 2: `iris` dataset
 
