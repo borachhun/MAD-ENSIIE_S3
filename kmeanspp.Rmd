@@ -43,8 +43,7 @@ kmeanspp <- function(X, k) {
   }
   
   # run kmeans with initialized centers
-  #return(kmeans(X, centers=X[center_index,]))
-  return(center_index)
+  return(kmeans(X, centers=X[center_index,]))
 }
 ```
 
@@ -88,22 +87,73 @@ NORM <- function(n, dim, pts) {
 
 ### 3. `k-means` and `k-means++` comparison
 
-Potential function:
+For the `k-means` problem (thus `k-means++` as well), we wish to minimize
+
 $$\phi = \sum_{x \in \mathcal{X}} \min_{c \in \mathcal{C}} ||x-c||^2$$
-where $\mathcal{X}$ is the set of data points and $\mathcal{C}$ is the set of centers
+where $\mathcal{X}$ is the set of data points and $\mathcal{C}$ is the set of centers.
+
+We now use the value of $\phi$ and the execution time of both algorithms to compare the perfomance between the two.
 
 ```{r}
-phi <- function(X, C) {
+phi <- function(X, centers) {
   res <- 0
   for (x_row in 1:nrow(X)) {
     to_min <- c()
-    for (c_row in 1:nrow(C)) {
-      to_min <- c(to_min, sum((X[x_row,] - C[c_row])^2))
+    for (c_row in 1:nrow(centers)) {
+      to_min <- c(to_min, sum((X[x_row,] - centers[c_row,])^2))
     }
     res <- res + min(to_min)
   }
   return(res)
 }
+```
+
+```{r}
+perf <- function(dataset) {
+  T_km <- c()
+  T_kmpp <- c()
+  
+  phi_km <- c()
+  phi_kmpp <- c()
+  
+  for (k in c(10,25,50)) {
+    for (i in 1:20) {
+      Sys.time() -> begin_km
+      km <- kmeans(dataset, k)
+      Sys.time() -> end_km
+      
+      Sys.time() -> begin_kmpp
+      kmpp <- kmeanspp(dataset, k)
+      Sys.time() -> end_kmpp
+      
+      T_km <- c(T_km, end_km-begin_km)
+      T_kmpp <- c(T_kmpp, end_kmpp-begin_kmpp)
+      phi_km <- c(phi_km, phi(dataset, km$centers))
+      phi_kmpp <- c(phi_kmpp, phi(dataset, kmpp$centers))
+    }
+  }
+  
+  return(list(
+    T_km_10 = T_km[1:20],
+    T_km_25 = T_km[21:40],
+    T_km_50 = T_km[41:60],
+    
+    T_kmpp_10 = T_kmpp[1:20],
+    T_kmpp_25 = T_kmpp[21:40],
+    T_kmpp_50 = T_kmpp[41:60],
+    
+    phi_km_10 = phi_km[1:20],
+    phi_km_25 = phi_km[21:40],
+    phi_km_50 = phi_km[41:60],
+    
+    phi_kmpp_10 = phi_kmpp[1:20],
+    phi_kmpp_25 = phi_kmpp[21:40],
+    phi_kmpp_50 = phi_kmpp[41:60]
+  ))
+}
+
+perf_NORM_10 <- perf(`NORM-10`)
+perf_NORM_25 <- perf(`NORM-25`)
 ```
 
 \begin{table}
@@ -113,44 +163,46 @@ phi <- function(X, C) {
  & \multicolumn{2}{|c|}{Average $\phi$} & \multicolumn{2}{|c|}{Minimum $\phi$} & \multicolumn{2}{|c|}{Average $T$} \\
 k & \multicolumn{1}{|c}{\texttt{k-means}} & \multicolumn{1}{c|}{\texttt{k-means++}} & \multicolumn{1}{|c}{\texttt{k-means}} & \multicolumn{1}{c|}{\texttt{k-means++}} & \multicolumn{1}{|c}{\texttt{k-means}} & \multicolumn{1}{c|}{\texttt{k-means++}} \\
 \hline
-10 & - & - & - & - & - & - \\
-25 & - & - & - & - & - & - \\
-50 & - & - & - & - & - & - \\
+10 & `r mean(perf_NORM_10$phi_km_10)` & `r mean(perf_NORM_10$phi_kmpp_10)` & `r min(perf_NORM_10$phi_km_10)` & `r min(perf_NORM_10$phi_kmpp_10)` & `r mean(perf_NORM_10$T_km_10)` & `r mean(perf_NORM_10$T_kmpp_10)` \\
+25 & `r mean(perf_NORM_10$phi_km_25)` & `r mean(perf_NORM_10$phi_kmpp_25)` & `r min(perf_NORM_10$phi_km_25)` & `r min(perf_NORM_10$phi_kmpp_25)` & `r mean(perf_NORM_10$T_km_25)` & `r mean(perf_NORM_10$T_kmpp_25)` \\
+50 & `r mean(perf_NORM_10$phi_km_50)` & `r mean(perf_NORM_10$phi_kmpp_50)` & `r min(perf_NORM_10$phi_km_50)` & `r min(perf_NORM_10$phi_kmpp_50)` & `r mean(perf_NORM_10$T_km_50)` & `r mean(perf_NORM_10$T_kmpp_50)` \\
 \hline
 \end{tabular}
-\caption{caption}
+\caption{Experimental results on the \emph{Norm-10} dataset (n = 10000, d = 5)}
 \end{table}
-
-```{r}
-kmeans_index <- sample(1:10000, size=25)
-kmeanspp_index <- kmeanspp(`NORM-25`, 25)
-
-Sys.time() -> begin1
-kmeans(`NORM-25`, `NORM-25`[kmeans_index,])
-Sys.time() -> end1
-
-Sys.time() -> begin2
-kmeans(`NORM-25`, `NORM-25`[kmeanspp_index,])
-Sys.time() -> end2
-
-print(end1-begin1)
-print(end2-begin2)
-```
-
 
 # Exercise 2: `iris` dataset
 
-### 1.
+### 1. Apply `k-means++`, `k-means` and `Mclust` on `iris` dataset
 ```{r}
-data_iris <- iris[,1:4]
+#data_iris <- iris[,1:4]
+#real_class <- iris[,5]
 ```
 
 ```{r}
-k1 <- kmeans(data_iris, centers=2)
+#kmpp <- kmeanspp(data_iris, 3)
+#kmpp_class <- kmpp$cluster
+#table(kmpp_class, real_class)
 ```
 
 ```{r}
-library(mclust)
-m <- Mclust(data_iris)
-plot(m, "BIC")
+#km <- kmeans(data_iris, centers=3)
+#km_class <- km$cluster
+#table(km_class, real_class)
 ```
+
+```{r}
+#library(mclust)
+#m <- Mclust(data_iris, G=3)
+#m_class <- m$classification
+#table(m_class, real_class)
+```
+
+### 2. Visualize the different partitions on PCA plan
+
+```{r}
+#PCA(data_iris[kmpp_class==1,])
+#PCA(data_iris[kmpp_class==2,])
+#PCA(data_iris[kmpp_class==3,])
+```
+
