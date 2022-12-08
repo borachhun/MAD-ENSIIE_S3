@@ -158,7 +158,6 @@ perf_NORM_10 <- perf(`NORM-10`)
 perf_NORM_25 <- perf(`NORM-25`)
 ```
 
-
 \begin{table}
 \centering
 \begin{tabular}{|c|c|c|c|c|c|c|}
@@ -174,95 +173,62 @@ k & \multicolumn{1}{|c}{\texttt{k-means}} & \multicolumn{1}{c|}{\texttt{k-means+
 \caption{Experimental results on the \emph{Norm-10} dataset (n = 10000, d = 5)}
 \end{table}
 
+Based on the performance results of table 1, in terms of the average value of $\phi$, we can see that `k-means++` performs drastically better than `k-means` for k = 10 and 25. As for the minimum $\phi$, it also shows that `k-means++` has a significantly better performance than `k-means` for k = 10, while the two algorithm performs approximately the same for k = 25 and 50. Finally, regarding the execution time, `k-means` performs a lot faster than `k-means++`. This may be a result of having the centers initialization step of `k-means++` unoptimized compared to the optimized `k-means` function in r library.
+
 # Exercise 2: `iris` dataset
 
 ### 1. Apply `k-means++`, `k-means` and `Mclust` on `iris` dataset
 
 ```{r}
 data_iris <- iris[,1:4]
-real_class <- iris[,5]
-
+iris_class <- iris[,5]
 ```
 
 ```{r}
-kmpp <- kmeanspp(data_iris, 3)
-kmpp_class <- kmpp$cluster
-#table(kmpp_class, real_class)
-kmpp.cluster<-as.factor(kmpp$cluster) 
-kmpp.centers <- as.data.frame(kmpp$centers)
+iris.kmpp <- kmeanspp(data_iris, 3)
+kmpp_class <- iris.kmpp$cluster
+table(`k-means++`=kmpp_class, iris=iris_class)
 ```
 
 ```{r}
-km <- kmeans(data_iris, centers=3)
-km_class <- km$cluster
-#table(km_class, real_class)
-km.cluster<-as.factor(km$cluster) 
-km.centers <- as.data.frame(km$centers)
+iris.km <- kmeans(data_iris, 3)
+km_class <- iris.km$cluster
+table(`k-means++`=km_class, iris=iris_class)
 ```
-
 
 ```{r}
 library(mclust)
-m <- Mclust(data_iris, G=3)
-m_class <- m$classification
-m.center <- as.factor(m$classification)
-#table(m_class, real_class)
-#summary(m)
-```
-
-Compare the performance of `k-means++`, `k-means` and `Mclust` on `iris` dataset
-```{r}
-Sys.time() -> begin_km
-perf_iris_km <- kmeans(data_iris, 3)
-Sys.time() -> end_km
-T_km <- end_km-begin_km
-
-Sys.time() -> begin_km
-perf_iris_kmpp <- kmeanspp(data_iris, 3)
-Sys.time() -> end_km
-T_kmpp <- end_km-begin_km
-
-Sys.time() -> begin_km
-perf_iris_gmm <- Mclust(data_iris, G=3)
-Sys.time() -> end_km
-T_gmm <- end_km-begin_km
-```
-
-```{r}
-T_km
-T_kmpp
-T_gmm
-```
-As the result, we clearly see that the executed times of Kmeans++ and Kmeans is quite similar when it comes to smaller datasets. Moreover, the performance of Mclust algorithm is much slower than Kmeans and Kmeans++.
-
-```{r}
-#par(mfrow=c(4,1))
-#pairs(data_iris, col=as.numeric(iris$Species))
-#pairs(data_iris, col=km.cluster)
-#pairs(data_iris, col=kmpp.cluster)
-#plot(m, what = "classification")
+iris.mclust <- Mclust(data_iris, G=3)
+summary(iris.mclust)
+m_class <- iris.mclust$classification
+table(Mclust=m_class, iris=iris_class)
 ```
 
 ### 2. Visualize the different partitions on PCA plan
 
 ```{r}
-library("factoextra")
-iris_scale <- scale(data_iris)
-iris.pca <- PCA(iris_scale, ncp = 4, graph = FALSE)
+library(FactoMineR)
+
+iris_scale <- scale(data_iris, center=TRUE, scale=FALSE)
+iris.pca <- PCA(iris_scale, scale.unit=FALSE, ncp=4, graph=FALSE)
 ```
 
 ```{r}
-iris.plot <- fviz_pca_ind(iris.pca, label="none", habillage = iris$Species, title="Original classes")
-iris.plot.kmeanspp <- fviz_pca_ind(iris.pca, label="none", habillage = kmpp.cluster, title = "Kmeans++")
-iris.plot.kmeans <- fviz_pca_ind(iris.pca, label="none", habillage = km.cluster, title = "kmeans")
-iris.plot.mclust <- fviz_pca_ind(iris.pca, label="none", habillage = m.center, title = "Mclust")
+library(factoextra)
+
+iris.plot <- fviz_pca_ind(iris.pca, label="none", habillage = as.factor(iris_class), title="Original classes")
+iris.plot.kmeanspp <- fviz_pca_ind(iris.pca, label="none", habillage = as.factor(kmpp_class), title = "k-means++")
+iris.plot.kmeans <- fviz_pca_ind(iris.pca, label="none", habillage = as.factor(km_class), title = "k-means")
+iris.plot.mclust <- fviz_pca_ind(iris.pca, label="none", habillage = as.factor(m_class), title = "Mclust")
 ```
-#### Comparing the partitions of original data with `Kmeans++`, `Kmeans` and `Mclust`
+
 ```{r}
 iris.plot
 iris.plot.kmeanspp
 iris.plot.kmeans
 iris.plot.mclust
 ```
-### Comments.
+
+### 3. Comment
+
 After the visualization, we can see that the partition from Mclust algorithm quite similar to the partition of original dataset even thougth it takes so long to finish the process.
