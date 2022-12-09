@@ -9,64 +9,56 @@ classoption: a4paper
 
 # Simulation
 
-1. A sample of $n=100$ observations of Poisson distribution with parameter $\lambda = 3$.
+### 1. Simulate a sample of $n=100$ observations of Poisson distribution with parameter $\lambda = 3$
 ```{r}
 poisson3 <- rpois(n=100, lambda=3)
-hist(poisson3)
 ```
 
-2. A sample of $n=200$ observations of Poisson distribution with parameter $\lambda = 15$.
+### 2. Simulate a sample of $n=200$ observations of Poisson distribution with parameter $\lambda = 15$
 ```{r}
 poisson15 <- rpois(n=200, lambda=15)
-hist(poisson15)
 ```
 
-3. A vector of 100 "1" followed by 200 "2".
+### 3. Create a vector of 100 "1" followed by 200 "2"
 ```{r}
 true_class <- rep(c(1,2), c(100,200))
 ```
 
-4. Simulate a mixture of two Poisson distribution
+### 4. Simulate a mixture of two Poisson distribution
 $$\mathbb{P}(x) = \pi_1 \frac{e^{-\lambda_1}}{x!} \lambda_1^x + \pi_2 \frac{e^{-\lambda_2}}{x!} \lambda_2^x$$
-with $\lambda_1=3$ and $\lambda_2=15$, $\pi_1=1/3$.
+with $\lambda_1=3$ and $\lambda_2=15$, $\pi_1=\frac{1}{3}$.
 ```{r}
-hist(c(poisson3, poisson15), col="orange", probability=TRUE, xlim=c(0,30))
-#hist(dpois(0:30, lambda=3))
-#plot(0:30, dpois(0:30, lambda=3))
-#curve(1/3 * dpois(as.integer(x), lambda=3) + 2/3 * dpois(as.integer(x), lambda=15), 0, 5, col="red", add=TRUE)
+poisson3_15 <- c(poisson3, poisson15)
+hist(poisson3_15, col="orange", main="Histogram of Poisson mixture")
 ```
 
 # EM algorithm for a Poisson mixture model of $K$ components
 
+Poisson distribution of $K$ components:
 $$
 \mathbb{P}(x) = \sum_{k=1}^K \pi_k \mathbb{P}_k(x) = \sum_{k=1}^K \pi_k \frac{e^{-\lambda_k}}{x!}\lambda_k^x
 $$
 
+We have the observations $X = (x_1,...,x_n)$, and the missing data $Z = (z_1,...,z_n)$.
+
+The objective is to find the parameters:
 $$\theta = \{\pi_1,...,\pi_K, \lambda_1,...,\lambda_K\}$$
 
-$$X = (x_1,...,x_n), \ Z = (z_1,...,z_n)$$
-
-
-
-
-
-
-
-1. Initialization
+### 1. Initialization
 
 We take $\pi_k = \frac{1}{K}$ and $\lambda_k = k, \forall k \in [\![1,K]\!]$
 
 ```{r}
-EM_init_poisson <- function(X, K) {
+EM_init_poisson <- function(K) {
   pi <- rep(1/K, times=K)
   lambda <- 1:K
   return(c(pi, lambda))
 }
 ```
 
-2. E step:
+### 2. E step
 
-At iteration $q$, E step computes $Q(\theta|\theta^{(q)})$.
+At iteration $q$, E step computes $Q(\theta|\theta^{(q)})$
 
 \begin{align*}
 Q(\theta|\theta^{(q)}) 
@@ -75,7 +67,7 @@ Q(\theta|\theta^{(q)})
 & = \sum_{i=1}^n \mathbb{E}_{z_i|x_i;\theta^{(q)}} \left[ \log \left( \mathbb{P}(z_i) \times \mathbb{P}(x_i|z_i;\theta) \right) \right]
 \end{align*}
 
-Let $z_{ik} = 1_{\{z_i=k\}}$.
+Let $z_{ik} = 1_{\{z_i=k\}}$
 
 \begin{align*}
 Q(\theta|\theta^{(q)})
@@ -86,13 +78,10 @@ Q(\theta|\theta^{(q)})
 
 Let $$t_{ik}^{(q)} = \mathbb{P}(z_i=k|x_i;\theta^{(q)}) = \frac{\pi_k^{(q) } \mathbb{P}_k(x_i;\lambda_k^{(q)})}{\sum_{m=1}^K \pi_m^{(q) } \mathbb{P}_m(x_i;\lambda_m^{(q)})}$$
 
-Here, we need to compute $t_{ik}^{(q)}, i \in [\![1,n]\!], k \in [\![1,K]\!]$
-
-
-
+At each iteration $q$, we only need to compute $t_{ik}^{(q)}, i \in [\![1,n]\!], k \in [\![1,K]\!]$
 
 ```{r}
-# theta <- c(pi_k, lambda_k)
+# theta : c(pi_k, lambda_k)
 E_step_poisson <- function(X, K, theta) {
   pi <- theta[1:K]
   lambda <- theta[(K+1):(2*K)]
@@ -106,8 +95,7 @@ E_step_poisson <- function(X, K, theta) {
 }
 ```
 
-3. M step:
-
+### 3. M step
 
 At iteration $q$, M step computes $$\theta^{(q+1)} = \arg \max_\theta Q(\theta|\theta^{(q)})$$
 
@@ -124,7 +112,7 @@ $$
 We calculate the derivative the same way for the other $\lambda$ ($\lambda_2,...\lambda_K$). We get:
 $$\lambda_k^{(q+1)} = \frac{\sum_{i=1}^n t_{ik}^{(q)} x_i}{\sum_{i=1}^n t_{ik}^{(q)}}, \ k \in [\![1,K]\!]$$
 
-Since there is a constraint $\sum_{k=1}^K \pi_k = 1$, consider Lagrangian:
+Since there is a constraint $\sum_{k=1}^K \pi_k = 1$, we consider Lagrangian:
 
 $$\mathcal{L}(\theta, \alpha) = Q(\theta|\theta^{(q)}) + \alpha \left( \sum_{k=1}^K \pi_k - 1 \right)$$
 
@@ -151,6 +139,7 @@ $$
 
 
 ```{r}
+# t : result of E step
 M_step_poisson <- function(X, K, t) {
   lambda <- sapply(1:K, function(k) sum(t[,k]*X) / sum(t[,k]))
   pi <- sapply(1:K, function(k) sum(t[,k]) / length(X))
@@ -158,24 +147,37 @@ M_step_poisson <- function(X, K, t) {
 }
 ```
 
-4. Testing programmed EM algorithm:
+### 4. Testing the programmed EM algorithm on the simulated data:
+
+We take the stopping condition of the algorithm:
 
 $$\frac{||\theta^{(q)} - \theta^{(q+1)}||_2^2}{||\theta^{(q)}||_2^2} < \epsilon$$
 
 where $\epsilon = 10^{-6}$
 
 ```{r}
-# initialization
-X <- c(poisson3, poisson15)
+X <- poisson3_15
 K <- 2
-theta <- EM_init_poisson(X, K)
+
+# initialization
+theta <- EM_init_poisson(K)
+
 repeat {
+  
+  # E step
   t <- E_step_poisson(X, K, theta)
+  
+  # M step
   new_theta <- M_step_poisson(X, K, t)
+  
+  # stopping condition
   if (sum((theta - new_theta)^2) / sum(theta^2) < 1e-6) {
     break
   }
+  
   theta <- new_theta
 }
-print(new_theta)
+
+print(paste(c("pi_1 =", "pi_2 =", "lambda_1 =", "lambda_2 ="), new_theta))
 ```
+
