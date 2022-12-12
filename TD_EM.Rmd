@@ -9,30 +9,30 @@ classoption: a4paper
 
 # Simulation
 
-### 1. Simulate a sample of $n=100$ observations of Poisson distribution with parameter $\lambda = 3$
+**1. Simulate a sample of $n=100$ observations of Poisson distribution with parameter $\lambda = 3$**
 ```{r}
 poisson3 <- rpois(n=100, lambda=3)
 ```
 
-### 2. Simulate a sample of $n=200$ observations of Poisson distribution with parameter $\lambda = 15$
+**2. Simulate a sample of $n=200$ observations of Poisson distribution with parameter $\lambda = 15$**
 ```{r}
 poisson15 <- rpois(n=200, lambda=15)
 ```
 
-### 3. Create a vector of 100 "1" followed by 200 "2"
+**3. Create a vector of 100 "1" followed by 200 "2"**
 ```{r}
 true_class <- rep(c(1,2), c(100,200))
 ```
 
-### 4. Simulate a mixture of two Poisson distribution
+**4. Simulate a mixture of two Poisson distribution**
 $$\mathbb{P}(x) = \pi_1 \frac{e^{-\lambda_1}}{x!} \lambda_1^x + \pi_2 \frac{e^{-\lambda_2}}{x!} \lambda_2^x$$
-with $\lambda_1=3$ and $\lambda_2=15$, $\pi_1=\frac{1}{3}$.
+with $\lambda_1=3$ and $\lambda_2=15$, $\pi_1=\frac{1}{3}$
 ```{r}
 poisson3_15 <- c(poisson3, poisson15)
-hist(poisson3_15, col="orange", main="Histogram of Poisson mixture")
+hist(poisson3_15, breaks=30, col="orange", main="Histogram of Poisson mixture")
 ```
 
-# EM algorithm for a Poisson mixture model of $K$ components
+# EM algorithm for Poisson mixture model of $K$ components
 
 Poisson distribution of $K$ components:
 $$
@@ -41,10 +41,10 @@ $$
 
 We have the observations $X = (x_1,...,x_n)$, and the missing data $Z = (z_1,...,z_n)$.
 
-The objective is to find the parameters:
+The objective is to estimate the parameters:
 $$\theta = \{\pi_1,...,\pi_K, \lambda_1,...,\lambda_K\}$$
 
-### 1. Initialization
+**1. Initialization**
 
 We take $\pi_k = \frac{1}{K}$ and $\lambda_k = k, \forall k \in [\![1,K]\!]$
 
@@ -56,7 +56,7 @@ EM_init_poisson <- function(K) {
 }
 ```
 
-### 2. E step
+**2. E step**
 
 At iteration $q$, E step computes $Q(\theta|\theta^{(q)})$
 
@@ -95,7 +95,7 @@ E_step_poisson <- function(X, K, theta) {
 }
 ```
 
-### 3. M step
+**3. M step**
 
 At iteration $q$, M step computes $$\theta^{(q+1)} = \arg \max_\theta Q(\theta|\theta^{(q)})$$
 
@@ -133,7 +133,7 @@ $$
 \alpha = -\sum_{i=1}^n \sum_{k=1}^K t_{ik}^{(q)}
 $$
 $$
-\pi_k^{(q+1)} = \frac{\sum_{i=1}^n t_{ik}^{(q)}}{\sum_{i=1}^n \sum_{k=1}^K t_{ik}^{(q)}}
+\pi_k^{(q+1)} = \frac{\sum_{i=1}^n t_{ik}^{(q)}}{\sum_{i=1}^n \sum_{m=1}^K t_{im}^{(q)}}
 = \frac{\sum_{i=1}^n t_{ik}^{(q)}}{n}, \ k \in [\![1,K]\!]
 $$
 
@@ -147,7 +147,7 @@ M_step_poisson <- function(X, K, t) {
 }
 ```
 
-### 4. Testing the programmed EM algorithm on the simulated data:
+**4. Testing the programmed EM algorithm on the simulated data**
 
 We take the stopping condition of the algorithm:
 
@@ -178,6 +178,14 @@ repeat {
   theta <- new_theta
 }
 
+# Result of theta from EM
 print(paste(c("pi_1 =", "pi_2 =", "lambda_1 =", "lambda_2 ="), new_theta))
+
+# Comparison between true classes and EM clusters
+EM_cluster <- c()
+for (row in 1:nrow(t)) {
+  EM_cluster <- c(EM_cluster, which.max(t[row,]))
+}
+table(EM=EM_cluster, True=true_class)
 ```
 

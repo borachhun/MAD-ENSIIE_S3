@@ -8,7 +8,7 @@ classoption: a4paper
 
 # Exercise 1: `k-means++` algorithm
 
-### 1. Programming `k-means++` algorithm
+**1. Programming `k-means++` algorithm**
 
 `k-means++` is an algorithm proposed by David Arthur and Sergei Vassilvitskii with the goal of improving the convergence and speed of the `k-means` algorithm, and it does so by carefully choosing the center of the clusters at the initial step. With `k-means`, it initially chooses the centers uniformly at random from the data points. In contrast, `k-means++` chooses the centers as followed:
 
@@ -16,7 +16,7 @@ i. Choose one center $c_1$ uniformly at random from the set of data points $\mat
 ii. Choose the next center $c_i$ by selecting $x' \in \mathcal{X}$ with weighted probability $\frac{D(x')^2}{\sum_{x \in \mathcal{X}} D(x)^2}$, where $D(x)$ is the shortest distance from $x$ to the closest center that has already been chosen
 iii. Repeat step ii until a total of $k$ centers are chosen, where $k$ is a given number of clusters.
 
-After choosing the centers, `k-means++` proceeds the same calculations as `k-means`.
+After choosing the centers, `k-means++` proceeds the same computations as `k-means`.
 
 ```{r}
 kmeanspp <- function(X, k) {
@@ -47,7 +47,7 @@ kmeanspp <- function(X, k) {
 }
 ```
 
-### 2. Simulate `NORM-10` and `NORM-25` datasets
+**2. Simulate `NORM-10` and `NORM-25` datasets**
 
 We now simulate 2 datasets, `NORM-10` and `NORM-25`, for evaluating the performance of the `k-means++` algorithm. To generate the datasets, we choose 10 (or 25) "real" centers uniformly at random from a hypercube of side length 500. We then add points from Gaussian distributions of variance 1 around each real center.
 
@@ -81,13 +81,11 @@ NORM <- function(n, dim, pts) {
   return(matrix(res, ncol=dim, byrow=TRUE))
 }
 
-knitr::knit_exit()
-
-#`NORM-10` <- NORM(n=10, dim=5, pts=1000)
-#`NORM-25` <- NORM(n=25, dim=15, pts=400)
+`NORM-10` <- NORM(n=10, dim=5, pts=1000)
+`NORM-25` <- NORM(n=25, dim=15, pts=400)
 ```
 
-### 3. `k-means` and `k-means++` comparison
+**3. `k-means` and `k-means++` comparison**
 
 With `k-means` (and thus `k-means++` as well), the problem involves minimizing
 
@@ -160,7 +158,7 @@ perf_NORM_10 <- perf(`NORM-10`)
 perf_NORM_25 <- perf(`NORM-25`)
 ```
 
-\begin{table}
+\begin{table}[h!]
 \centering
 \begin{tabular}{|c|c|c|c|c|c|c|}
 \hline
@@ -175,11 +173,26 @@ k & \multicolumn{1}{|c}{\texttt{k-means}} & \multicolumn{1}{c|}{\texttt{k-means+
 \caption{Experimental results on the \emph{Norm-10} dataset (n = 10000, d = 5)}
 \end{table}
 
-Based on the performance results of table 1, in terms of the average value of $\phi$, we can see that `k-means++` performs drastically better than `k-means` for k = 10 and 25. As for the minimum $\phi$, it also shows that `k-means++` has a significantly better performance than `k-means` for k = 10, while the two algorithm performs approximately the same for k = 25 and 50. Finally, regarding the execution time, `k-means` performs a lot faster than `k-means++`. This may be a result of having the centers initialization step of `k-means++` unoptimized compared to the optimized `k-means` function in r library.
+\begin{table}[h!]
+\centering
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+ & \multicolumn{2}{|c|}{Average $\phi$} & \multicolumn{2}{|c|}{Minimum $\phi$} & \multicolumn{2}{|c|}{Average $T$} \\
+k & \multicolumn{1}{|c}{\texttt{k-means}} & \multicolumn{1}{c|}{\texttt{k-means++}} & \multicolumn{1}{|c}{\texttt{k-means}} & \multicolumn{1}{c|}{\texttt{k-means++}} & \multicolumn{1}{|c}{\texttt{k-means}} & \multicolumn{1}{c|}{\texttt{k-means++}} \\
+\hline
+10 & `r mean(perf_NORM_25$phi_km_10)` & `r mean(perf_NORM_25$phi_kmpp_10)` & `r min(perf_NORM_25$phi_km_10)` & `r min(perf_NORM_25$phi_kmpp_10)` & `r mean(perf_NORM_25$T_km_10)` & `r mean(perf_NORM_25$T_kmpp_10)` \\
+25 & `r mean(perf_NORM_25$phi_km_25)` & `r mean(perf_NORM_25$phi_kmpp_25)` & `r min(perf_NORM_25$phi_km_25)` & `r min(perf_NORM_25$phi_kmpp_25)` & `r mean(perf_NORM_25$T_km_25)` & `r mean(perf_NORM_25$T_kmpp_25)` \\
+50 & `r mean(perf_NORM_25$phi_km_50)` & `r mean(perf_NORM_25$phi_kmpp_50)` & `r min(perf_NORM_25$phi_km_50)` & `r min(perf_NORM_25$phi_kmpp_50)` & `r mean(perf_NORM_25$T_km_50)` & `r mean(perf_NORM_25$T_kmpp_50)` \\
+\hline
+\end{tabular}
+\caption{Experimental results on the \emph{Norm-25} dataset (n = 10000, d = 15)}
+\end{table}
+
+Based on the performance results of table 1 and table 2, in terms of the average value of $\phi$, we can see that `k-means++` performs drastically better than `k-means` (k = 10 and 25 for `NORM-10`, k = 25 and 50 for `NORM-25`). As for the minimum $\phi$, it also shows that `k-means++` has a significantly better performance than `k-means`, with k = 10 for `NORM-10` and k = 25 for `NORM-25`, while the two algorithm performs approximately the same for the other values of k. Finally, regarding the execution time, `k-means` performs a lot faster than `k-means++` in all cases. This may be a result of having the centers initialization step of `k-means++` unoptimized compared to the optimized `k-means` function in r library.
 
 # Exercise 2: `iris` dataset
 
-### 1. Apply `k-means++`, `k-means` and `Mclust` on `iris` dataset
+**1. Apply `k-means++`, `k-means` and `Mclust` on `iris` dataset**
 
 The `iris` dataset gives measurements of 4 variables (sepal length and width, petal length and width) of 50 flowers from each of 3 species of iris (Setosa, Versicolor, Virginica).
 
@@ -211,9 +224,9 @@ table(`k-means`=km_class, iris=iris_class)
 table(Mclust=m_class, iris=iris_class)
 ```
 
-According to the cluster comparison tables above, we can see that both `k-means` and `kmeans++` have the same result, by correctly clustering Setosa species and making 2 and 14 mistakes with Versicolor and Virginica species respectively. As for `Mclust`, it managed to perform better, by only making 5 mistakes with Versicolor species.
+According to the cluster comparison tables above, we can see that both `k-means` and `k-means++` have the same result, by correctly clustering Setosa species and making 2 and 14 mistakes with Versicolor and Virginica species respectively. As for `Mclust`, it managed to perform better, by only making 5 mistakes with Versicolor species.
 
-### 2. Visualize the different partitions on PCA plan
+**2. Visualize the different partitions on PCA plan**
 
 ```{r}
 library(FactoMineR)
@@ -225,10 +238,14 @@ iris.pca <- PCA(iris_scale, scale.unit=FALSE, ncp=4, graph=FALSE)
 ```{r}
 library(factoextra)
 
-iris.plot <- fviz_pca_ind(iris.pca, label="none", habillage = as.factor(iris_class), title="Original classes")
-iris.plot.kmeanspp <- fviz_pca_ind(iris.pca, label="none", habillage = as.factor(kmpp_class), title = "k-means++")
-iris.plot.kmeans <- fviz_pca_ind(iris.pca, label="none", habillage = as.factor(km_class), title = "k-means")
-iris.plot.mclust <- fviz_pca_ind(iris.pca, label="none", habillage = as.factor(m_class), title = "Mclust")
+iris.plot <- fviz_pca_ind(iris.pca, label="none",
+                          habillage = as.factor(iris_class), title="Original classes")
+iris.plot.kmeanspp <- fviz_pca_ind(iris.pca, label="none",
+                                   habillage = as.factor(kmpp_class), title = "k-means++")
+iris.plot.kmeans <- fviz_pca_ind(iris.pca, label="none",
+                                 habillage = as.factor(km_class), title = "k-means")
+iris.plot.mclust <- fviz_pca_ind(iris.pca, label="none",
+                                 habillage = as.factor(m_class), title = "Mclust")
 ```
 
 ```{r}
@@ -242,6 +259,6 @@ grid.arrange(
 )
 ```
 
-### 3. Comment
+**3. Comment**
 
-Based on the plotted graphs above, we can see that the partition of `Mclust` is almost the same as the original, whereas for `k-means` and `k-means++`, the cluster of Versicolor species slightly overlaps the cluster of Virginica. Regarding PCA, the two principal components in the plot explains almost 98% of the variance of the dataset, meaning that it is sufficient to only consider these two components.
+Based on the plotted graphs above, we can see that the partition of `Mclust` is almost the same as the original, whereas for `k-means` and `k-means++`, the cluster of Versicolor species slightly overlaps the cluster of Virginica. Regarding PCA, the two principal components in the plot explains almost 98% of the total variation of the dataset, meaning that it is sufficient to only consider these two components.
